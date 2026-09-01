@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="fr" class="h-full" x-data="alumlyApp" :class="{ 'dark': darkMode }">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alumly Drive - Partage & Ressources</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#eef2ff",
+                100: "#e0e7ff",
+                500: "#6366f1",
+                600: "#4f46e5",
+                700: "#4338ca",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+  </head>
+  <body
+    class="h-full flex flex-col font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200"
+  >
+    <!-- HEADER -->
+    <header
+      class="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors"
+    >
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4"
+      >
+        <div
+          class="flex items-center gap-3 cursor-pointer select-none"
+          @click="currentView = 'drive'"
+        >
+          <div
+            class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-brand-500/20"
+          >
+            A
+          </div>
+          <div>
+            <span
+              class="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white"
+              >Alumly</span
+            >
+            <span
+              class="hidden sm:inline-block ml-1.5 px-2 py-0.5 text-xs font-semibold bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 rounded-full border border-brand-200 dark:border-brand-800"
+              >Drive</span
+            >
+          </div>
+        </div>
+
+        <div x-show="currentView === 'drive'" class="flex-1 max-w-xl relative">
+          <i
+            data-lucide="search"
+            class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"
+          ></i>
+          <input
+            type="text"
+            x-model="searchQuery"
+            placeholder="Rechercher une fiche, un DS, un cours (ex: Jordan, Maxwell...)"
+            class="w-full pl-10 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition text-slate-800 dark:text-slate-100 placeholder-slate-400"
+          />
+          <button
+            x-show="searchQuery"
+            @click="searchQuery = ''"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div
+          x-show="currentView === 'admin'"
+          class="flex-1 text-center font-bold text-slate-700 dark:text-slate-200"
+        >
+          Panneau d'Administration — Validation des inscriptions
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <button
+            @click="toggleTheme()"
+            class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+            title="Changer de thème"
+          >
+            <i x-show="!darkMode" data-lucide="moon" class="w-4 h-4"></i>
+            <i
+              x-show="darkMode"
+              data-lucide="sun"
+              class="w-4 h-4 text-amber-400"
+            ></i>
+          </button>
+
+          <button
+            x-show="currentUser"
+            @click="isUploadModalOpen = true"
+            class="flex items-center gap-2 px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl shadow-sm transition active:scale-95"
+          >
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Déposer une ressource</span>
+          </button>
+
+          <button
+            x-show="!currentUser"
+            @click="openAuthModal('login')"
+            class="flex items-center gap-1.5 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold rounded-xl transition hover:opacity-90 shadow-sm"
+          >
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+            <span>Connexion</span>
+          </button>
+
+          <div x-show="currentUser" class="relative" x-data="{ open: false }">
+            <button
+              @click="open = !open"
+              class="flex items-center gap-2 p-1.5 pl-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold transition border border-slate-200 dark:border-slate-700"
+            >
+              <span
+                class="max-w-[110px] truncate"
+                x-text="currentUser?.name"
+              ></span>
+              <div
+                class="w-6 h-6 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-[11px]"
+                x-text="currentUser?.name?.charAt(0)"
+              ></div>
+            </button>
+
+            <div
+              x-show="open"
+              @click.outside="open = false"
+              x-transition
+              class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-2 z-50 text-xs"
+            >
+              <div class="p-2 border-b border-slate-100 dark:border-slate-800">
+                <p
+                  class="font-bold text-slate-800 dark:text-slate-200"
+                  x-text="currentUser?.name"
+                ></p>
+                <p
+                  class="text-[10px] text-slate-400 truncate"
+                  x-text="currentUser?.email"
+                ></p>
+                <span
+                  class="inline-block mt-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800"
+                  x-text="currentUser?.role"
+                ></span>
+              </div>
+
+              <div class="py-1">
+                <button
+                  @click="currentView = 'drive'; open = false"
+                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-600 dark:text-slate-300"
+                >
+                  <i data-lucide="folder" class="w-4 h-4"></i> Drive &
+                  Ressources
+                </button>
+
+                <template x-if="currentUser?.role === 'admin'">
+                  <button
+                    @click="currentView = 'admin'; open = false"
+                    class="w-full text-left px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-950/50 text-brand-600 dark:text-brand-400 font-semibold flex items-center justify-between"
+                  >
+                    <div class="flex items-center gap-2">
+                      <i data-lucide="shield-check" class="w-4 h-4"></i> Panel
+                      Admin
+                    </div>
+                    <span
+                      x-show="pendingCount > 0"
+                      class="px-1.5 py-0.5 rounded-full text-[10px] bg-red-500 text-white font-bold"
+                      x-text="pendingCount"
+                    ></span>
+                  </button>
+                </template>
+              </div>
+
+              <div class="pt-1 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  @click="logout(); open = false"
+                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center gap-2"
+                >
+                  <i data-lucide="log-out" class="w-4 h-4"></i> Déconnexion
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- VUE DRIVE -->
+    <div
+      x-show="currentView === 'drive'"
+      class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6"
+    >
+      <aside class="w-full md:w-64 shrink-0 flex flex-col gap-6">
+        <div
+          class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors"
+        >
+          <label
+            class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2"
+            >Filière / Niveau</label
+          >
+          <div class="grid grid-cols-2 gap-1.5 mt-2">
+            <template x-for="filiere in filieres" :key="filiere">
+              <button
+                @click="selectedFiliere = filiere"
+                :class="selectedFiliere === filiere ? 'bg-brand-600 text-white font-medium shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                class="py-1.5 px-3 rounded-lg text-xs font-semibold transition text-center"
+                x-text="filiere"
+              ></button>
+            </template>
+          </div>
+        </div>
+
+        <div
+          class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col transition-colors"
+        >
+          <label
+            class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2"
+            >Matières</label
+          >
+          <nav class="space-y-1">
+            <template x-for="matiere in matieres" :key="matiere.id">
+              <button
+                @click="selectedMatiere = matiere.id"
+                :class="selectedMatiere === matiere.id ? 'bg-brand-50 dark:bg-brand-950/50 text-brand-700 dark:text-brand-300 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition"
+              >
+                <div class="flex items-center gap-2.5">
+                  <span class="text-base" x-text="matiere.icon"></span>
+                  <span x-text="matiere.label"></span>
+                </div>
+                <span
+                  class="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full"
+                  x-text="countByMatiere(matiere.id)"
+                ></span>
+              </button>
+            </template>
+          </nav>
+        </div>
+
+        <div
+          x-show="!currentUser"
+          class="p-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-md"
+        >
+          <div
+            class="text-xs uppercase font-semibold text-indigo-100 tracking-wider"
+          >
+            Accès sécurisé
+          </div>
+          <div class="text-lg font-black mt-1">Étudiant du Lymed ?</div>
+          <p class="text-xs text-indigo-100 mt-1 leading-relaxed">
+            Rejoins Alumly et accède à l'ensemble des fiches et annales
+            vérifiées.
+          </p>
+          <button
+            @click="openAuthModal('register')"
+            class="mt-3.5 w-full py-2 bg-white text-brand-700 font-bold rounded-xl text-xs hover:bg-indigo-50 shadow-sm transition"
+          >
+            Demander mon accès
+          </button>
+        </div>
+      </aside>
+
+      <main class="flex-1 flex flex-col gap-5">
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors"
+        >
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <template x-for="type in types" :key="type">
+              <button
+                @click="selectedType = type; onlyStarred = false"
+                :class="(selectedType === type && !onlyStarred) ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                class="px-3 py-1.5 rounded-lg text-xs transition whitespace-nowrap"
+                x-text="type"
+              ></button>
+            </template>
+            <button
+              @click="onlyStarred = !onlyStarred"
+              :class="onlyStarred ? 'bg-amber-500 text-white font-medium shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-600 border border-slate-200 dark:border-slate-700'"
+              class="px-3 py-1.5 rounded-lg text-xs transition whitespace-nowrap flex items-center gap-1.5"
+            >
+              <i
+                data-lucide="star"
+                class="w-3.5 h-3.5"
+                :class="onlyStarred ? 'fill-white' : 'fill-none'"
+              ></i>
+              <span>Mes Favoris</span>
+            </button>
+          </div>
+
+          <div
+            class="flex items-center gap-3 ml-auto text-xs text-slate-500 dark:text-slate-400"
+          >
+            <div class="flex items-center gap-1.5">
+              <span class="hidden sm:inline">Trier par :</span>
+              <select
+                x-model="sortBy"
+                class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 font-medium focus:outline-none"
+              >
+                <option value="stars">Étoiles</option>
+                <option value="downloads">Téléchargements</option>
+                <option value="recent">Récents</option>
+              </select>
+            </div>
+
+            <div
+              class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg p-0.5"
+            >
+              <button
+                @click="viewMode = 'grid'"
+                :class="viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-400'"
+                class="p-1 rounded"
+              >
+                <i data-lucide="layout-grid" class="w-4 h-4"></i>
+              </button>
+              <button
+                @click="viewMode = 'list'"
+                :class="viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-400'"
+                class="p-1 rounded"
+              >
+                <i data-lucide="list" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LISTE GRILLE -->
+        <div
+          x-show="viewMode === 'grid'"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          <template x-for="item in filteredResources()" :key="item.id">
+            <div
+              class="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-brand-700 transition flex flex-col justify-between"
+            >
+              <div>
+                <div class="flex items-center justify-between mb-3 text-xs">
+                  <div class="flex items-center gap-2">
+                    <span
+                      :class="getTypeBadgeStyle(item.type)"
+                      class="font-semibold px-2 py-0.5 rounded-md"
+                      x-text="item.type"
+                    ></span>
+                    <span class="text-slate-400" x-text="item.year"></span>
+                  </div>
+                  <button
+                    @click="toggleStar(item)"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-semibold transition active:scale-90"
+                    :class="item.isStarred ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700'"
+                  >
+                    <i
+                      data-lucide="star"
+                      class="w-3.5 h-3.5 transition"
+                      :class="item.isStarred ? 'fill-amber-400 text-amber-500' : 'text-slate-400'"
+                    ></i>
+                    <span x-text="item.stars"></span>
+                  </button>
+                </div>
+
+                <h3
+                  class="font-bold text-slate-800 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition line-clamp-1"
+                  x-text="item.title"
+                ></h3>
+                <p
+                  class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed"
+                  x-text="item.description"
+                ></p>
+
+                <div class="flex flex-wrap gap-1.5 mt-3">
+                  <template x-for="tag in item.tags" :key="tag">
+                    <span
+                      class="text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md"
+                      x-text="'#' + tag"
+                    ></span>
+                  </template>
+                </div>
+              </div>
+
+              <div
+                class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"
+              >
+                <div class="flex items-center gap-1.5">
+                  <div
+                    class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-[10px]"
+                    x-text="item.author.charAt(0)"
+                  ></div>
+                  <span
+                    class="truncate max-w-[100px]"
+                    x-text="item.author"
+                  ></span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="flex items-center gap-1 text-[11px]"
+                    ><i data-lucide="download" class="w-3 h-3"></i>
+                    <span x-text="item.downloads"></span
+                  ></span>
+                  <a
+                    :href="item.file_url"
+                    target="_blank"
+                    download
+                    class="p-1.5 hover:bg-brand-50 dark:hover:bg-brand-950/50 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg transition"
+                    title="Télécharger le fichier"
+                  >
+                    <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- LISTE TABLEAU -->
+        <div
+          x-show="viewMode === 'list'"
+          class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors"
+        >
+          <table class="w-full text-left text-xs">
+            <thead
+              class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold"
+            >
+              <tr>
+                <th class="py-3 px-4">Titre</th>
+                <th class="py-3 px-4">Matière</th>
+                <th class="py-3 px-4">Type</th>
+                <th class="py-3 px-4">Étoiles</th>
+                <th class="py-3 px-4">Téléchargements</th>
+                <th class="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <template x-for="item in filteredResources()" :key="item.id">
+                <tr
+                  class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+                >
+                  <td class="py-3 px-4">
+                    <span
+                      class="font-bold text-slate-800 dark:text-slate-100 block"
+                      x-text="item.title"
+                    ></span>
+                    <span
+                      class="text-[11px] text-slate-400"
+                      x-text="'par ' + item.author + ' (' + item.year + ')'"
+                    ></span>
+                  </td>
+                  <td
+                    class="py-3 px-4 text-slate-600 dark:text-slate-400"
+                    x-text="getMatiereLabel(item.matiere)"
+                  ></td>
+                  <td class="py-3 px-4">
+                    <span
+                      :class="getTypeBadgeStyle(item.type)"
+                      class="font-semibold px-2 py-0.5 rounded-md"
+                      x-text="item.type"
+                    ></span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <button
+                      @click="toggleStar(item)"
+                      class="flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-semibold transition"
+                      :class="item.isStarred ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'"
+                    >
+                      <i
+                        data-lucide="star"
+                        class="w-3.5 h-3.5"
+                        :class="item.isStarred ? 'fill-amber-400 text-amber-500' : 'text-slate-400'"
+                      ></i>
+                      <span x-text="item.stars"></span>
+                    </button>
+                  </td>
+                  <td
+                    class="py-3 px-4 text-slate-500 dark:text-slate-400"
+                    x-text="item.downloads"
+                  ></td>
+                  <td class="py-3 px-4 text-right">
+                    <a
+                      :href="item.file_url"
+                      target="_blank"
+                      download
+                      class="p-1.5 inline-block text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                      <i data-lucide="download" class="w-4 h-4 inline"></i>
+                    </a>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <div
+          x-show="filteredResources().length === 0"
+          class="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center"
+        >
+          <i
+            data-lucide="file-question"
+            class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3"
+          ></i>
+          <h4 class="font-bold text-slate-700 dark:text-slate-300">
+            Aucune ressource trouvée
+          </h4>
+          <p class="text-xs text-slate-400 mt-1">
+            Sois le premier à publier une fiche ou modifie tes filtres !
+          </p>
+        </div>
+      </main>
+    </div>
+
+    <!-- VUE ADMIN -->
+    <div
+      x-show="currentView === 'admin'"
+      class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div
+          class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+        >
+          <div
+            class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+          >
+            Demandes en attente
+          </div>
+          <div
+            class="text-2xl font-black text-amber-500 mt-1"
+            x-text="pendingCount"
+          ></div>
+        </div>
+        <div
+          class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+        >
+          <div
+            class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+          >
+            Membres approuvés
+          </div>
+          <div
+            class="text-2xl font-black text-emerald-500 mt-1"
+            x-text="registrationRequests.filter(r => r.status === 'approved').length"
+          ></div>
+        </div>
+        <div
+          class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+        >
+          <div
+            class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+          >
+            Demandes refusées
+          </div>
+          <div
+            class="text-2xl font-black text-slate-400 mt-1"
+            x-text="registrationRequests.filter(r => r.status === 'rejected').length"
+          ></div>
+        </div>
+      </div>
+
+      <div
+        class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+      >
+        <div
+          class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between"
+        >
+          <h2
+            class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2"
+          >
+            <i data-lucide="user-check" class="w-4 h-4 text-brand-600"></i>
+            Demandes d'inscription au Lymed Drive
+          </h2>
+          <button
+            @click="currentView = 'drive'"
+            class="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center gap-1"
+          >
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Revenir au
+            Drive
+          </button>
+        </div>
+
+        <table class="w-full text-left text-xs">
+          <thead
+            class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold"
+          >
+            <tr>
+              <th class="py-3 px-4">Élève / Candidat</th>
+              <th class="py-3 px-4">Filière & Promo</th>
+              <th class="py-3 px-4">Date</th>
+              <th class="py-3 px-4">Certificat</th>
+              <th class="py-3 px-4">Statut</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <template x-for="req in registrationRequests" :key="req.id">
+              <tr
+                class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
+              >
+                <td class="py-3.5 px-4">
+                  <span
+                    class="font-bold text-slate-800 dark:text-slate-100 block"
+                    x-text="req.full_name"
+                  ></span>
+                  <span
+                    class="text-[11px] text-slate-400"
+                    x-text="req.email"
+                  ></span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span
+                    class="font-medium text-slate-700 dark:text-slate-300"
+                    x-text="req.filiere"
+                  ></span>
+                  <span
+                    class="text-[11px] text-slate-400 block"
+                    x-text="'Promo ' + req.promo"
+                  ></span>
+                </td>
+                <td
+                  class="py-3.5 px-4 text-slate-500"
+                  x-text="new Date(req.created_at).toLocaleDateString('fr-FR')"
+                ></td>
+                <td class="py-3.5 px-4">
+                  <button
+                    @click="previewProof(req)"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700 transition"
+                  >
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                    <span>Voir justificatif</span>
+                  </button>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span
+                    class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    :class="{
+                    'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800': req.status === 'pending',
+                    'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800': req.status === 'approved',
+                    'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800': req.status === 'rejected'
+                  }"
+                    x-text="getStatusLabel(req.status)"
+                  >
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <div
+                    class="flex items-center justify-end gap-1.5"
+                    x-show="req.status === 'pending'"
+                  >
+                    <button
+                      @click="approveRequest(req)"
+                      class="p-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-600 text-emerald-600 hover:text-white rounded-lg border border-emerald-200 dark:border-emerald-800 transition"
+                      title="Valider la demande"
+                    >
+                      <i data-lucide="check" class="w-4 h-4"></i>
+                    </button>
+                    <button
+                      @click="rejectRequest(req)"
+                      class="p-1.5 bg-red-50 dark:bg-red-950/60 hover:bg-red-600 text-red-600 hover:text-white rounded-lg border border-red-200 dark:border-red-800 transition"
+                      title="Refuser la demande"
+                    >
+                      <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                  <span
+                    x-show="req.status !== 'pending'"
+                    class="text-slate-400 text-[11px] italic"
+                    >Traité</span
+                  >
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MODAL AUTHENTIFICATION (LOGIN / REGISTER) -->
+    <div
+      x-show="isAuthModalOpen"
+      x-transition.opacity
+      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+      style="display: none"
+    >
+      <div
+        @click.outside="isAuthModalOpen = false"
+        class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 text-slate-900 dark:text-slate-100"
+      >
+        <div
+          class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800"
+        >
+          <div
+            class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl"
+          >
+            <button
+              @click="authTab = 'login'"
+              :class="authTab === 'login' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'"
+              class="px-3 py-1 rounded-lg text-xs font-bold transition"
+            >
+              Connexion
+            </button>
+            <button
+              @click="authTab = 'register'"
+              :class="authTab === 'register' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'"
+              class="px-3 py-1 rounded-lg text-xs font-bold transition"
+            >
+              Demander un accès
+            </button>
+          </div>
+          <button
+            @click="isAuthModalOpen = false"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- ONGLET CONNEXION -->
+        <form
+          x-show="authTab === 'login'"
+          @submit.prevent="handleLogin()"
+          class="space-y-4 text-xs"
+        >
+          <div
+            x-show="loginError"
+            class="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-medium"
+            x-text="loginError"
+          ></div>
+
+          <div>
+            <label
+              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >Adresse Email</label
+            >
+            <input
+              type="email"
+              x-model="loginEmail"
+              required
+              placeholder="nom@alumni.lymed.ma"
+              class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            />
+          </div>
+          <div>
+            <label
+              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >Mot de passe</label
+            >
+            <input
+              type="password"
+              x-model="loginPassword"
+              required
+              placeholder="••••••••"
+              class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            />
+          </div>
+
+          <button
+            type="submit"
+            :disabled="isLoading"
+            class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-sm flex items-center justify-center gap-2"
+          >
+            <span x-show="!isLoading">Se connecter</span>
+            <span x-show="isLoading">Connexion en cours...</span>
+          </button>
+        </form>
+
+        <!-- ONGLET DEMANDE D'ACCÈS -->
+        <form
+          x-show="authTab === 'register'"
+          @submit.prevent="submitRegistrationRequest($event)"
+          class="space-y-3.5 text-xs"
+        >
+          <template x-if="!registerSubmitted">
+            <div class="space-y-3">
+              <div>
+                <label
+                  class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >Nom complet</label
+                >
+                <input
+                  type="text"
+                  x-model="regForm.name"
+                  required
+                  placeholder="ex: Yassine Bennani"
+                  class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label
+                  class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >Email</label
+                >
+                <input
+                  type="email"
+                  x-model="regForm.email"
+                  required
+                  placeholder="yassine@exemple.com"
+                  class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label
+                  class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >Mot de passe</label
+                >
+                <input
+                  type="password"
+                  x-model="regForm.password"
+                  required
+                  minlength="6"
+                  placeholder="••••••••"
+                  class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label
+                    class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                    >Filière</label
+                  >
+                  <select
+                    x-model="regForm.filiere"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                  >
+                    <option>MPSI / MP</option>
+                    <option>PCSI / PSI</option>
+                    <option>TSI</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                    >Promo</label
+                  >
+                  <input
+                    type="number"
+                    x-model="regForm.promo"
+                    required
+                    placeholder="2026"
+                    class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  >Certificat / Justificatif Lymed (PDF ou Image)</label
+                >
+                <input
+                  type="file"
+                  required
+                  accept=".pdf,image/*"
+                  class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+                />
+              </div>
+
+              <button
+                type="submit"
+                :disabled="isLoading"
+                class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-sm"
+              >
+                <span x-show="!isLoading">Envoyer ma demande</span>
+                <span x-show="isLoading">Envoi en cours...</span>
+              </button>
+            </div>
+          </template>
+
+          <!-- Écran de confirmation après soumission -->
+          <template x-if="registerSubmitted">
+            <div class="text-center py-6 space-y-3">
+              <div
+                class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center mx-auto text-2xl font-bold"
+              >
+                <i data-lucide="check-circle" class="w-6 h-6"></i>
+              </div>
+              <h4
+                class="font-bold text-slate-800 dark:text-slate-100 text-base"
+              >
+                Demande enregistrée !
+              </h4>
+              <p
+                class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed"
+              >
+                Ton justificatif est en attente de validation par un
+                administrateur. Dès son approbation, tu pourras te connecter
+                directement avec ton adresse email et ton mot de passe.
+              </p>
+              <div class="flex items-center justify-center gap-2 pt-2">
+                <button
+                  type="button"
+                  @click="registerSubmitted = false; authTab = 'login'"
+                  class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-xs transition shadow-sm"
+                >
+                  Aller à la connexion
+                </button>
+                <button
+                  type="button"
+                  @click="isAuthModalOpen = false; registerSubmitted = false"
+                  class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </template>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL AJOUTER UNE RESSOURCE -->
+    <div
+      x-show="isUploadModalOpen"
+      x-transition.opacity
+      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+      style="display: none"
+    >
+      <div
+        @click.outside="isUploadModalOpen = false"
+        class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 text-slate-900 dark:text-slate-100"
+      >
+        <div
+          class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800"
+        >
+          <h3 class="font-bold text-lg">Ajouter une ressource</h3>
+          <button
+            @click="isUploadModalOpen = false"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <form
+          @submit.prevent="handleUploadResource($event)"
+          class="space-y-4 text-xs"
+        >
+          <div>
+            <label
+              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >Titre du document</label
+            >
+            <input
+              type="text"
+              x-model="newResource.title"
+              required
+              placeholder="ex: Fiche Synthèse Dunford"
+              class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label
+              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >Description (optionnelle)</label
+            >
+            <textarea
+              x-model="newResource.description"
+              rows="2"
+              placeholder="Détails, thèmes abordés..."
+              class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none resize-none"
+            ></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >Matière</label
+              >
+              <select
+                x-model="newResource.matiere"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+              >
+                <option value="maths">Mathématiques</option>
+                <option value="physique">Physique & Chimie</option>
+                <option value="info">Informatique</option>
+                <option value="francais">Français-Philo</option>
+                <option value="anglais">Anglais</option>
+              </select>
+            </div>
+            <div>
+              <label
+                class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >Type</label
+              >
+              <select
+                x-model="newResource.type"
+                class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+              >
+                <option>Fiches</option>
+                <option>DS / Concours</option>
+                <option>Cours</option>
+                <option>Exercices / TD</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label
+              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >Tags (séparés par des virgules)</label
+            >
+            <input
+              type="text"
+              x-model="newResource.tags"
+              placeholder="ex: Algèbre, Dunford, Concours 2026"
+              class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label
+              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >Fichier PDF</label
+            >
+            <input
+              type="file"
+              required
+              accept=".pdf"
+              class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+            />
+          </div>
+          <div
+            class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800"
+          >
+            <button
+              type="button"
+              @click="isUploadModalOpen = false"
+              class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              :disabled="isLoading"
+              class="px-5 py-2 text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 rounded-xl shadow-sm transition"
+            >
+              <span x-show="!isLoading">Publier</span>
+              <span x-show="isLoading">Publication...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

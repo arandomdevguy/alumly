@@ -1,0 +1,9 @@
+/* Configuration Tailwind Custom */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Styles spécifiques si besoin */
+[x-cloak] {
+  display: none !important;
+}
