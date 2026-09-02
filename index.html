@@ -1,28 +1,42 @@
 <!doctype html>
-<html lang="fr" class="h-full" x-data="alumlyApp" :class="{ 'dark': darkMode }">
+<html lang="fr" class="h-full dark" x-data="alumlyApp">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alumly Drive - Partage & Ressources</title>
+    <title>Alumly Drive — Annales & Ressources Lymed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         darkMode: "class",
         theme: {
           extend: {
+            fontFamily: {
+              bizantheum: ["bizantheum", "serif"],
+              poppins: ["poppins", "serif"],
+            },
             colors: {
-              brand: {
-                50: "#eef2ff",
-                100: "#e0e7ff",
-                500: "#6366f1",
-                600: "#4f46e5",
-                700: "#4338ca",
+              navy: {
+                950: "#090e15",
+                900: "#0d151f",
+                800: "#14202e",
+                700: "#1b2b3d",
+                600: "#26394f",
+              },
+              rose: {
+                accent: "#ffacac",
+                soft: "rgba(255, 172, 172, 0.15)",
               },
             },
           },
         },
       };
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -33,37 +47,48 @@
     ></script>
   </head>
   <body
-    class="h-full flex flex-col font-sans bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200"
+    class="h-full flex flex-col bg-navy-900 text-slate-200 transition-colors duration-200 selection:bg-rose-accent/30 selection:text-white"
+    x-data="{ mobileSearchOpen: false }"
   >
-    <!-- HEADER -->
+    <!-- HEADER / RESPONSIVE NAVBAR -->
     <header
-      class="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors"
+      class="sticky top-0 z-30 bg-navy-800/95 backdrop-blur-md border-b border-white/10"
     >
       <div
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4"
       >
-        <div
-          class="flex items-center gap-3 cursor-pointer select-none"
-          @click="currentView = 'drive'"
-        >
-          <div
-            class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-brand-500/20"
+        <!-- Logo / Back to Landing Page -->
+        <div class="flex items-center shrink-0">
+          <a
+            href="index.html"
+            class="flex items-center gap-3 no-underline group"
+            @click="if (currentView !== 'drive') { goToDrive(); }"
           >
-            A
-          </div>
-          <div>
-            <span
-              class="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white"
-              >Alumly</span
-            >
-            <span
-              class="hidden sm:inline-block ml-1.5 px-2 py-0.5 text-xs font-semibold bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 rounded-full border border-brand-200 dark:border-brand-800"
-              >Drive</span
-            >
-          </div>
+            <img
+              src="signature.webp"
+              alt="Alumly Logo"
+              class="w-9 h-9 object-contain group-hover:scale-105 transition-transform duration-200"
+            />
+            <div class="flex items-baseline gap-1.5">
+              <span
+                class="font-bizantheum tracking-wider text-xl uppercase text-white group-hover:text-rose-accent transition"
+              >
+                Alumly
+              </span>
+              <span
+                class="px-2 py-0.5 text-[10px] tracking-widest font-semibold uppercase bg-navy-700 text-rose-accent rounded border border-rose-accent/20"
+              >
+                Drive
+              </span>
+            </div>
+          </a>
         </div>
 
-        <div x-show="currentView === 'drive'" class="flex-1 max-w-xl relative">
+        <!-- Desktop Search Bar -->
+        <div
+          x-show="currentView === 'drive'"
+          class="hidden md:flex flex-1 max-w-md relative"
+        >
           <i
             data-lucide="search"
             class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"
@@ -71,68 +96,71 @@
           <input
             type="text"
             x-model="searchQuery"
-            placeholder="Rechercher une fiche, un DS, un cours (ex: Jordan, Maxwell...)"
-            class="w-full pl-10 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800/80 border border-transparent dark:border-slate-700/50 rounded-xl focus:bg-white dark:focus:bg-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition text-slate-800 dark:text-slate-100 placeholder-slate-400"
+            placeholder="Rechercher une fiche, un cours (Jordan, Maxwell...)"
+            class="w-full pl-10 pr-9 py-2 text-sm bg-navy-950/70 border border-white/10 rounded-xl text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-rose-accent focus:ring-1 focus:ring-rose-accent/30 transition"
           />
           <button
             x-show="searchQuery"
             @click="searchQuery = ''"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
           >
-            <i data-lucide="x" class="w-4 h-4"></i>
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
           </button>
         </div>
 
+        <!-- Header Title for Admin Panel -->
         <div
           x-show="currentView === 'admin'"
-          class="flex-1 text-center font-bold text-slate-700 dark:text-slate-200"
+          class="hidden md:block flex-1 text-center font-bizantheum tracking-wider uppercase text-rose-accent text-sm"
         >
           Panneau d'Administration — Validation des inscriptions
         </div>
 
-        <div class="flex items-center gap-2.5">
+        <!-- Right Side Nav Actions -->
+        <div class="flex items-center gap-2">
+          <!-- Mobile Search Toggle Button -->
           <button
-            @click="toggleTheme()"
-            class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-            title="Changer de thème"
+            x-show="currentView === 'drive'"
+            @click="mobileSearchOpen = !mobileSearchOpen; $nextTick(() => { if(mobileSearchOpen) $refs.mobileSearchInput.focus(); })"
+            class="md:hidden p-2.5 rounded-xl bg-navy-700 border border-white/10 text-slate-200 hover:text-rose-accent transition active:scale-95"
+            :class="{ 'border-rose-accent/60 bg-navy-600': mobileSearchOpen }"
+            aria-label="Recherche mobile"
           >
-            <i x-show="!darkMode" data-lucide="moon" class="w-4 h-4"></i>
-            <i
-              x-show="darkMode"
-              data-lucide="sun"
-              class="w-4 h-4 text-amber-400"
-            ></i>
+            <i data-lucide="search" class="w-4 h-4"></i>
           </button>
 
+          <!-- Upload CTA -->
           <button
             x-show="currentUser"
             @click="isUploadModalOpen = true"
-            class="flex items-center gap-2 px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl shadow-sm transition active:scale-95"
+            class="flex items-center gap-1.5 px-3 py-2 bg-rose-accent text-navy-950 hover:bg-white text-xs font-semibold rounded-xl transition shadow-sm active:scale-95"
           >
-            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Déposer une ressource</span>
+            <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Déposer</span>
           </button>
 
+          <!-- Login CTA -->
           <button
             x-show="!currentUser"
             @click="openAuthModal('login')"
-            class="flex items-center gap-1.5 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold rounded-xl transition hover:opacity-90 shadow-sm"
+            class="flex items-center gap-1.5 px-3.5 py-2 bg-navy-700 hover:bg-navy-600 border border-white/10 text-white text-xs font-medium rounded-xl transition"
           >
-            <i data-lucide="log-in" class="w-4 h-4"></i>
+            <i data-lucide="log-in" class="w-3.5 h-3.5 text-rose-accent"></i>
             <span>Connexion</span>
           </button>
 
+          <!-- Logged User Profile Dropdown -->
           <div x-show="currentUser" class="relative" x-data="{ open: false }">
             <button
               @click="open = !open"
-              class="flex items-center gap-2 p-1.5 pl-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold transition border border-slate-200 dark:border-slate-700"
+              class="flex items-center gap-2 p-1.5 pl-2.5 rounded-xl bg-navy-700 hover:bg-navy-600 border border-white/10 text-xs font-medium transition"
             >
               <span
-                class="max-w-[110px] truncate"
+                class="max-w-[100px] truncate text-slate-200"
                 x-text="currentUser?.name"
               ></span>
               <div
-                class="w-6 h-6 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-[11px]"
+                class="w-6 h-6 rounded-lg bg-rose-accent text-navy-950 flex items-center justify-center font-bold text-[11px]"
                 x-text="currentUser?.name?.charAt(0)"
               ></div>
             </button>
@@ -141,40 +169,56 @@
               x-show="open"
               @click.outside="open = false"
               x-transition
-              class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-2 z-50 text-xs"
+              class="absolute right-0 mt-2 w-56 bg-navy-800 rounded-2xl shadow-2xl border border-white/10 p-2 z-50 text-xs"
             >
-              <div class="p-2 border-b border-slate-100 dark:border-slate-800">
+              <div class="p-2.5 border-b border-white/10">
                 <p
-                  class="font-bold text-slate-800 dark:text-slate-200"
+                  class="font-bold text-white text-sm"
                   x-text="currentUser?.name"
                 ></p>
                 <p
-                  class="text-[10px] text-slate-400 truncate"
+                  class="text-[11px] text-slate-400 truncate"
                   x-text="currentUser?.email"
                 ></p>
                 <span
-                  class="inline-block mt-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800"
+                  class="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-navy-900 text-rose-accent border border-rose-accent/30"
                   x-text="currentUser?.role"
                 ></span>
               </div>
 
               <div class="py-1">
+                <!-- Voir toutes les ressources -->
                 <button
-                  @click="currentView = 'drive'; open = false"
-                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-600 dark:text-slate-300"
+                  @click="goToDrive(); open = false"
+                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-navy-700/60 flex items-center gap-2 text-slate-300 hover:text-white"
                 >
-                  <i data-lucide="folder" class="w-4 h-4"></i> Drive &
-                  Ressources
+                  <i
+                    data-lucide="folder"
+                    class="w-3.5 h-3.5 text-rose-accent"
+                  ></i>
+                  Drive & Ressources
+                </button>
+
+                <!-- Mes Publications -->
+                <button
+                  @click="showMyResources(); open = false"
+                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-navy-700/60 flex items-center gap-2 text-slate-300 hover:text-white"
+                >
+                  <i
+                    data-lucide="file-user"
+                    class="w-3.5 h-3.5 text-rose-accent"
+                  ></i>
+                  Mes publications
                 </button>
 
                 <template x-if="currentUser?.role === 'admin'">
                   <button
                     @click="currentView = 'admin'; open = false"
-                    class="w-full text-left px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-950/50 text-brand-600 dark:text-brand-400 font-semibold flex items-center justify-between"
+                    class="w-full text-left px-3 py-2 rounded-lg hover:bg-navy-700/60 text-rose-accent font-medium flex items-center justify-between"
                   >
                     <div class="flex items-center gap-2">
-                      <i data-lucide="shield-check" class="w-4 h-4"></i> Panel
-                      Admin
+                      <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                      Panel Admin
                     </div>
                     <span
                       x-show="pendingCount > 0"
@@ -185,65 +229,112 @@
                 </template>
               </div>
 
-              <div class="pt-1 border-t border-slate-100 dark:border-slate-800">
+              <div class="pt-1 border-t border-white/10">
                 <button
                   @click="logout(); open = false"
-                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center gap-2"
+                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-950/40 text-red-400 flex items-center gap-2"
                 >
-                  <i data-lucide="log-out" class="w-4 h-4"></i> Déconnexion
+                  <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Déconnexion
                 </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- RESPONSIVE MOBILE SEARCH BAR DRAWER -->
+      <div
+        x-show="mobileSearchOpen && currentView === 'drive'"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 -translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-2"
+        class="md:hidden px-4 pt-2 pb-3.5 bg-navy-950/95 border-t border-white/10"
+      >
+        <div class="relative flex items-center w-full">
+          <i
+            data-lucide="search"
+            class="w-5 h-5 text-rose-accent absolute left-3.5 pointer-events-none"
+          ></i>
+          <input
+            x-ref="mobileSearchInput"
+            type="search"
+            x-model="searchQuery"
+            placeholder="Rechercher (ex: Jordan, Dunford, Maxwell...)"
+            class="w-full pl-11 pr-10 py-3 text-base bg-navy-800 border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:border-rose-accent focus:ring-2 focus:ring-rose-accent/30 min-h-[48px] shadow-lg leading-normal"
+          />
+          <button
+            x-show="searchQuery"
+            @click="searchQuery = ''; $refs.mobileSearchInput.focus()"
+            class="absolute right-3 p-1 rounded-md text-slate-400 hover:text-white active:scale-90"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div
+          class="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1"
+        >
+          <span>Recherche instantanée</span>
+          <button
+            @click="mobileSearchOpen = false"
+            class="text-rose-accent hover:underline font-medium"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
     </header>
 
-    <!-- VUE DRIVE -->
+    <!-- DRIVE VIEW -->
     <div
       x-show="currentView === 'drive'"
       class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6"
     >
-      <aside class="w-full md:w-64 shrink-0 flex flex-col gap-6">
+      <!-- Sidebar Filters -->
+      <aside class="w-full md:w-64 shrink-0 flex flex-col gap-5">
+        <!-- Filières -->
         <div
-          class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors"
+          class="bg-navy-800/80 p-3.5 rounded-xl border border-white/10 shadow-sm"
         >
           <label
-            class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2"
+            class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1"
             >Filière / Niveau</label
           >
-          <div class="grid grid-cols-2 gap-1.5 mt-2">
+          <div class="grid grid-cols-2 gap-1.5 mt-2.5">
             <template x-for="filiere in filieres" :key="filiere">
               <button
                 @click="selectedFiliere = filiere"
-                :class="selectedFiliere === filiere ? 'bg-brand-600 text-white font-medium shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
-                class="py-1.5 px-3 rounded-lg text-xs font-semibold transition text-center"
+                :class="selectedFiliere === filiere ? 'bg-rose-accent text-navy-950 font-semibold shadow-sm' : 'text-slate-300 hover:bg-navy-700/60'"
+                class="py-1.5 px-2 rounded-lg text-xs transition text-center"
                 x-text="filiere"
               ></button>
             </template>
           </div>
         </div>
 
+        <!-- Matières -->
         <div
-          class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col transition-colors"
+          class="bg-navy-800/80 p-3.5 rounded-xl border border-white/10 shadow-sm flex flex-col"
         >
           <label
-            class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 mb-2"
+            class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1 mb-2"
             >Matières</label
           >
           <nav class="space-y-1">
             <template x-for="matiere in matieres" :key="matiere.id">
               <button
                 @click="selectedMatiere = matiere.id"
-                :class="selectedMatiere === matiere.id ? 'bg-brand-50 dark:bg-brand-950/50 text-brand-700 dark:text-brand-300 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
-                class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition"
+                :class="selectedMatiere === matiere.id ? 'bg-navy-700 border-l-2 border-rose-accent text-white font-semibold' : 'text-slate-400 hover:bg-navy-700/40 hover:text-slate-200'"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition"
               >
-                <div class="flex items-center gap-2.5">
-                  <span class="text-base" x-text="matiere.icon"></span>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm" x-text="matiere.icon"></span>
                   <span x-text="matiere.label"></span>
                 </div>
                 <span
-                  class="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full"
+                  class="text-[10px] text-slate-400 bg-navy-900/80 px-2 py-0.5 rounded"
                   x-text="countByMatiere(matiere.id)"
                 ></span>
               </button>
@@ -251,64 +342,87 @@
           </nav>
         </div>
 
+        <!-- Student Registration Callout -->
         <div
           x-show="!currentUser"
-          class="p-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-md"
+          class="p-4 rounded-xl bg-gradient-to-b from-navy-700 to-navy-800 border border-rose-accent/20 text-white shadow-lg relative overflow-hidden"
         >
           <div
-            class="text-xs uppercase font-semibold text-indigo-100 tracking-wider"
+            class="text-[10px] uppercase font-bold text-rose-accent tracking-widest"
           >
-            Accès sécurisé
+            Accès Vérifié
           </div>
-          <div class="text-lg font-black mt-1">Étudiant du Lymed ?</div>
-          <p class="text-xs text-indigo-100 mt-1 leading-relaxed">
-            Rejoins Alumly et accède à l'ensemble des fiches et annales
-            vérifiées.
+          <div
+            class="font-bizantheum text-xl uppercase mt-1 tracking-wider text-white"
+          >
+            Étudiant du Lymed ?
+          </div>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed font-light">
+            Rejoins la plateforme pour consulter l'ensemble des cours, fiches et
+            annales résolues.
           </p>
           <button
             @click="openAuthModal('register')"
-            class="mt-3.5 w-full py-2 bg-white text-brand-700 font-bold rounded-xl text-xs hover:bg-indigo-50 shadow-sm transition"
+            class="mt-3.5 w-full py-2 bg-rose-accent hover:bg-white text-navy-950 font-bold rounded-lg text-xs transition shadow-sm"
           >
             Demander mon accès
           </button>
         </div>
       </aside>
 
-      <main class="flex-1 flex flex-col gap-5">
+      <!-- Main Resources Section -->
+      <main class="flex-1 flex flex-col gap-4">
+        <!-- Bandeau d'indication si filtre "Mes publications" actif -->
         <div
-          class="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors"
+          x-show="onlyMyPublications"
+          class="flex items-center justify-between bg-navy-800/90 border border-rose-accent/30 px-3.5 py-2.5 rounded-xl text-xs"
+        >
+          <div class="flex items-center gap-2 text-rose-accent font-medium">
+            <i data-lucide="file-user" class="w-4 h-4"></i>
+            <span>Affichage de vos publications uniquement</span>
+          </div>
+          <button
+            @click="onlyMyPublications = false; $nextTick(() => lucide.createIcons())"
+            class="text-slate-400 hover:text-white underline text-[11px]"
+          >
+            Tout afficher
+          </button>
+        </div>
+
+        <!-- Filter Bar & Display Options -->
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 bg-navy-800/80 p-3 rounded-xl border border-white/10 shadow-sm"
         >
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
             <template x-for="type in types" :key="type">
               <button
-                @click="selectedType = type; onlyStarred = false"
-                :class="(selectedType === type && !onlyStarred) ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
-                class="px-3 py-1.5 rounded-lg text-xs transition whitespace-nowrap"
+                @click="selectedType = type; onlyStarred = false; $nextTick(() => lucide.createIcons())"
+                :class="(selectedType === type && !onlyStarred) ? 'bg-white text-navy-950 font-semibold' : 'text-slate-400 hover:bg-navy-700/50 hover:text-white'"
+                class="px-2.5 py-1 rounded-md text-xs transition whitespace-nowrap"
                 x-text="type"
               ></button>
             </template>
             <button
-              @click="onlyStarred = !onlyStarred"
-              :class="onlyStarred ? 'bg-amber-500 text-white font-medium shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-600 border border-slate-200 dark:border-slate-700'"
-              class="px-3 py-1.5 rounded-lg text-xs transition whitespace-nowrap flex items-center gap-1.5"
+              @click="onlyStarred = !onlyStarred; $nextTick(() => lucide.createIcons())"
+              :class="onlyStarred ? 'bg-rose-accent text-navy-950 font-semibold' : 'text-slate-400 hover:bg-navy-700/50 border border-white/10 hover:text-white'"
+              class="px-2.5 py-1 rounded-md text-xs transition whitespace-nowrap flex items-center gap-1"
             >
               <i
                 data-lucide="star"
-                class="w-3.5 h-3.5"
-                :class="onlyStarred ? 'fill-white' : 'fill-none'"
+                class="w-3 h-3"
+                :class="onlyStarred ? 'fill-navy-950' : 'fill-none'"
               ></i>
-              <span>Mes Favoris</span>
+              <span>Favoris</span>
             </button>
           </div>
 
-          <div
-            class="flex items-center gap-3 ml-auto text-xs text-slate-500 dark:text-slate-400"
-          >
+          <div class="flex items-center gap-3 ml-auto text-xs text-slate-400">
             <div class="flex items-center gap-1.5">
-              <span class="hidden sm:inline">Trier par :</span>
+              <span class="hidden sm:inline text-slate-400">Trier:</span>
               <select
                 x-model="sortBy"
-                class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 font-medium focus:outline-none"
+                @change="$nextTick(() => lucide.createIcons())"
+                class="bg-navy-900 border border-white/10 rounded-md px-2.5 py-1 text-slate-200 text-xs font-medium focus:outline-none focus:border-rose-accent"
               >
                 <option value="stars">Étoiles</option>
                 <option value="downloads">Téléchargements</option>
@@ -317,72 +431,75 @@
             </div>
 
             <div
-              class="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg p-0.5"
+              class="flex items-center border border-white/10 rounded-md p-0.5 bg-navy-900"
             >
               <button
                 @click="viewMode = 'grid'"
-                :class="viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-400'"
+                :class="viewMode === 'grid' ? 'bg-navy-700 text-rose-accent' : 'text-slate-500 hover:text-slate-300'"
                 class="p-1 rounded"
               >
-                <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
               </button>
               <button
                 @click="viewMode = 'list'"
-                :class="viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-400'"
+                :class="viewMode === 'list' ? 'bg-navy-700 text-rose-accent' : 'text-slate-500 hover:text-slate-300'"
                 class="p-1 rounded"
               >
-                <i data-lucide="list" class="w-4 h-4"></i>
+                <i data-lucide="list" class="w-3.5 h-3.5"></i>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- LISTE GRILLE -->
+        <!-- GRID VIEW -->
         <div
           x-show="viewMode === 'grid'"
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"
         >
           <template x-for="item in filteredResources()" :key="item.id">
             <div
-              class="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-brand-700 transition flex flex-col justify-between"
+              class="group bg-navy-800/90 rounded-xl border border-white/10 p-4 shadow-sm hover:border-rose-accent/50 transition-all flex flex-col justify-between"
             >
               <div>
-                <div class="flex items-center justify-between mb-3 text-xs">
-                  <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between mb-2.5 text-xs">
+                  <div class="flex items-center gap-1.5">
                     <span
-                      :class="getTypeBadgeStyle(item.type)"
-                      class="font-semibold px-2 py-0.5 rounded-md"
+                      class="font-medium px-2 py-0.5 rounded text-[10px] bg-navy-700 text-rose-accent border border-rose-accent/20"
                       x-text="item.type"
                     ></span>
-                    <span class="text-slate-400" x-text="item.year"></span>
+                    <span
+                      class="text-slate-500 text-[11px]"
+                      x-text="item.year"
+                    ></span>
                   </div>
+
                   <button
                     @click="toggleStar(item)"
-                    class="flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-semibold transition active:scale-90"
-                    :class="item.isStarred ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700'"
+                    class="flex items-center gap-1 px-2 py-0.5 rounded border text-[11px] font-medium transition active:scale-95"
+                    :class="item.isStarred ? 'bg-navy-700 border-rose-accent/60 text-rose-accent' : 'bg-navy-900/60 border-white/10 text-slate-400 hover:text-slate-200'"
                   >
                     <i
                       data-lucide="star"
-                      class="w-3.5 h-3.5 transition"
-                      :class="item.isStarred ? 'fill-amber-400 text-amber-500' : 'text-slate-400'"
+                      class="w-3 h-3 transition"
+                      :class="item.isStarred ? 'fill-rose-accent text-rose-accent' : 'text-slate-500'"
                     ></i>
                     <span x-text="item.stars"></span>
                   </button>
                 </div>
 
                 <h3
-                  class="font-bold text-slate-800 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition line-clamp-1"
+                  class="font-semibold text-slate-100 group-hover:text-rose-accent transition line-clamp-1 text-sm"
                   x-text="item.title"
                 ></h3>
                 <p
-                  class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed"
+                  class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed font-light"
                   x-text="item.description"
                 ></p>
 
-                <div class="flex flex-wrap gap-1.5 mt-3">
+                <div class="flex flex-wrap gap-1 mt-3">
                   <template x-for="tag in item.tags" :key="tag">
                     <span
-                      class="text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md"
+                      class="text-[9px] font-medium bg-navy-900/80 text-slate-400 border border-white/5 px-1.5 py-0.5 rounded"
                       x-text="'#' + tag"
                     ></span>
                   </template>
@@ -390,31 +507,33 @@
               </div>
 
               <div
-                class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"
+                class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400"
               >
                 <div class="flex items-center gap-1.5">
                   <div
-                    class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-[10px]"
+                    class="w-5 h-5 rounded-full bg-navy-700 text-rose-accent border border-white/10 flex items-center justify-center font-bold text-[9px]"
                     x-text="item.author.charAt(0)"
                   ></div>
                   <span
-                    class="truncate max-w-[100px]"
+                    class="truncate max-w-[100px] text-[11px]"
                     x-text="item.author"
                   ></span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="flex items-center gap-1 text-[11px]"
-                    ><i data-lucide="download" class="w-3 h-3"></i>
-                    <span x-text="item.downloads"></span
-                  ></span>
+                  <span
+                    class="flex items-center gap-1 text-[11px] text-slate-400"
+                  >
+                    <i data-lucide="download" class="w-3 h-3"></i>
+                    <span x-text="item.downloads"></span>
+                  </span>
                   <a
                     :href="item.file_url"
                     target="_blank"
                     download
-                    class="p-1.5 hover:bg-brand-50 dark:hover:bg-brand-950/50 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg transition"
-                    title="Télécharger le fichier"
+                    class="p-1 hover:bg-navy-700 hover:text-rose-accent rounded transition text-slate-400 inline-flex items-center justify-center"
+                    title="Télécharger"
                   >
-                    <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+                    <i data-lucide="arrow-down-to-line" class="w-3.5 h-3.5"></i>
                   </a>
                 </div>
               </div>
@@ -422,334 +541,332 @@
           </template>
         </div>
 
-        <!-- LISTE TABLEAU -->
+        <!-- TABLE VIEW -->
         <div
           x-show="viewMode === 'list'"
-          class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors"
+          class="bg-navy-800/90 rounded-xl border border-white/10 shadow-sm overflow-hidden"
         >
-          <table class="w-full text-left text-xs">
-            <thead
-              class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold"
-            >
-              <tr>
-                <th class="py-3 px-4">Titre</th>
-                <th class="py-3 px-4">Matière</th>
-                <th class="py-3 px-4">Type</th>
-                <th class="py-3 px-4">Étoiles</th>
-                <th class="py-3 px-4">Téléchargements</th>
-                <th class="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-              <template x-for="item in filteredResources()" :key="item.id">
-                <tr
-                  class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
-                >
-                  <td class="py-3 px-4">
-                    <span
-                      class="font-bold text-slate-800 dark:text-slate-100 block"
-                      x-text="item.title"
-                    ></span>
-                    <span
-                      class="text-[11px] text-slate-400"
-                      x-text="'par ' + item.author + ' (' + item.year + ')'"
-                    ></span>
-                  </td>
-                  <td
-                    class="py-3 px-4 text-slate-600 dark:text-slate-400"
-                    x-text="getMatiereLabel(item.matiere)"
-                  ></td>
-                  <td class="py-3 px-4">
-                    <span
-                      :class="getTypeBadgeStyle(item.type)"
-                      class="font-semibold px-2 py-0.5 rounded-md"
-                      x-text="item.type"
-                    ></span>
-                  </td>
-                  <td class="py-3 px-4">
-                    <button
-                      @click="toggleStar(item)"
-                      class="flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-semibold transition"
-                      :class="item.isStarred ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'"
-                    >
-                      <i
-                        data-lucide="star"
-                        class="w-3.5 h-3.5"
-                        :class="item.isStarred ? 'fill-amber-400 text-amber-500' : 'text-slate-400'"
-                      ></i>
-                      <span x-text="item.stars"></span>
-                    </button>
-                  </td>
-                  <td
-                    class="py-3 px-4 text-slate-500 dark:text-slate-400"
-                    x-text="item.downloads"
-                  ></td>
-                  <td class="py-3 px-4 text-right">
-                    <a
-                      :href="item.file_url"
-                      target="_blank"
-                      download
-                      class="p-1.5 inline-block text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                    >
-                      <i data-lucide="download" class="w-4 h-4 inline"></i>
-                    </a>
-                  </td>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead
+                class="bg-navy-900/80 border-b border-white/10 text-slate-400 uppercase font-semibold text-[10px] tracking-wider"
+              >
+                <tr>
+                  <th class="py-3 px-4">Titre</th>
+                  <th class="py-3 px-4">Matière</th>
+                  <th class="py-3 px-4">Type</th>
+                  <th class="py-3 px-4">Étoiles</th>
+                  <th class="py-3 px-4">Téléchargements</th>
+                  <th class="py-3 px-4 text-right">Action</th>
                 </tr>
-              </template>
-            </tbody>
-          </table>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                <template x-for="item in filteredResources()" :key="item.id">
+                  <tr class="hover:bg-navy-700/40 transition">
+                    <td class="py-3 px-4">
+                      <span
+                        class="font-medium text-slate-100 block"
+                        x-text="item.title"
+                      ></span>
+                      <span
+                        class="text-[10px] text-slate-400"
+                        x-text="'par ' + item.author + ' (' + item.year + ')'"
+                      ></span>
+                    </td>
+                    <td
+                      class="py-3 px-4 text-slate-400"
+                      x-text="getMatiereLabel(item.matiere)"
+                    ></td>
+                    <td class="py-3 px-4">
+                      <span
+                        class="px-2 py-0.5 rounded text-[10px] bg-navy-700 text-rose-accent border border-rose-accent/20"
+                        x-text="item.type"
+                      ></span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <button
+                        @click="toggleStar(item)"
+                        class="flex items-center gap-1 px-2 py-0.5 rounded border text-[11px] font-medium transition"
+                        :class="item.isStarred ? 'bg-navy-700 border-rose-accent/60 text-rose-accent' : 'bg-navy-900 border-white/10 text-slate-400'"
+                      >
+                        <i
+                          data-lucide="star"
+                          class="w-3 h-3"
+                          :class="item.isStarred ? 'fill-rose-accent' : 'text-slate-500'"
+                        ></i>
+                        <span x-text="item.stars"></span>
+                      </button>
+                    </td>
+                    <td
+                      class="py-3 px-4 text-slate-400"
+                      x-text="item.downloads"
+                    ></td>
+                    <td class="py-3 px-4 text-right">
+                      <a
+                        :href="item.file_url"
+                        target="_blank"
+                        download
+                        class="p-1 inline-flex items-center justify-center text-slate-400 hover:text-rose-accent rounded transition"
+                      >
+                        <i
+                          data-lucide="download"
+                          class="w-3.5 h-3.5 inline"
+                        ></i>
+                      </a>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
         </div>
 
+        <!-- Empty State -->
         <div
           x-show="filteredResources().length === 0"
-          class="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center"
+          class="bg-navy-800/40 rounded-xl border border-dashed border-white/10 p-10 text-center"
         >
           <i
             data-lucide="file-question"
-            class="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3"
+            class="w-8 h-8 text-slate-500 mx-auto mb-2"
           ></i>
-          <h4 class="font-bold text-slate-700 dark:text-slate-300">
+          <h4
+            class="font-bizantheum tracking-wider uppercase text-slate-200 text-base"
+          >
             Aucune ressource trouvée
           </h4>
-          <p class="text-xs text-slate-400 mt-1">
-            Sois le premier à publier une fiche ou modifie tes filtres !
+          <p class="text-xs text-slate-400 mt-1 font-light">
+            Sois le premier à publier une fiche ou modifie tes filtres.
           </p>
         </div>
       </main>
     </div>
 
-    <!-- VUE ADMIN -->
+    <!-- ADMIN VIEW -->
     <div
       x-show="currentView === 'admin'"
       class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6"
     >
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
-          class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+          class="bg-navy-800 p-4 rounded-xl border border-white/10 shadow-sm"
         >
           <div
-            class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
           >
             Demandes en attente
           </div>
           <div
-            class="text-2xl font-black text-amber-500 mt-1"
+            class="text-2xl font-bold text-rose-accent mt-1"
             x-text="pendingCount"
           ></div>
         </div>
         <div
-          class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+          class="bg-navy-800 p-4 rounded-xl border border-white/10 shadow-sm"
         >
           <div
-            class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
           >
             Membres approuvés
           </div>
           <div
-            class="text-2xl font-black text-emerald-500 mt-1"
+            class="text-2xl font-bold text-emerald-400 mt-1"
             x-text="registrationRequests.filter(r => r.status === 'approved').length"
           ></div>
         </div>
         <div
-          class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+          class="bg-navy-800 p-4 rounded-xl border border-white/10 shadow-sm"
         >
           <div
-            class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
           >
             Demandes refusées
           </div>
           <div
-            class="text-2xl font-black text-slate-400 mt-1"
+            class="text-2xl font-bold text-slate-500 mt-1"
             x-text="registrationRequests.filter(r => r.status === 'rejected').length"
           ></div>
         </div>
       </div>
 
       <div
-        class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+        class="bg-navy-800 rounded-xl border border-white/10 shadow-sm overflow-hidden"
       >
         <div
-          class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between"
+          class="p-4 border-b border-white/10 flex items-center justify-between"
         >
           <h2
-            class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2"
+            class="font-bizantheum uppercase tracking-wider text-sm text-white flex items-center gap-2"
           >
-            <i data-lucide="user-check" class="w-4 h-4 text-brand-600"></i>
-            Demandes d'inscription au Lymed Drive
+            <i data-lucide="user-check" class="w-4 h-4 text-rose-accent"></i>
+            Demandes d'inscription Lymed
           </h2>
           <button
-            @click="currentView = 'drive'"
-            class="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center gap-1"
+            @click="goToDrive()"
+            class="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition"
           >
             <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Revenir au
             Drive
           </button>
         </div>
 
-        <table class="w-full text-left text-xs">
-          <thead
-            class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase font-semibold"
-          >
-            <tr>
-              <th class="py-3 px-4">Élève / Candidat</th>
-              <th class="py-3 px-4">Filière & Promo</th>
-              <th class="py-3 px-4">Date</th>
-              <th class="py-3 px-4">Certificat</th>
-              <th class="py-3 px-4">Statut</th>
-              <th class="py-3 px-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            <template x-for="req in registrationRequests" :key="req.id">
-              <tr
-                class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition"
-              >
-                <td class="py-3.5 px-4">
-                  <span
-                    class="font-bold text-slate-800 dark:text-slate-100 block"
-                    x-text="req.full_name"
-                  ></span>
-                  <span
-                    class="text-[11px] text-slate-400"
-                    x-text="req.email"
-                  ></span>
-                </td>
-                <td class="py-3.5 px-4">
-                  <span
-                    class="font-medium text-slate-700 dark:text-slate-300"
-                    x-text="req.filiere"
-                  ></span>
-                  <span
-                    class="text-[11px] text-slate-400 block"
-                    x-text="'Promo ' + req.promo"
-                  ></span>
-                </td>
-                <td
-                  class="py-3.5 px-4 text-slate-500"
-                  x-text="new Date(req.created_at).toLocaleDateString('fr-FR')"
-                ></td>
-                <td class="py-3.5 px-4">
-                  <button
-                    @click="previewProof(req)"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700 transition"
-                  >
-                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-                    <span>Voir justificatif</span>
-                  </button>
-                </td>
-                <td class="py-3.5 px-4">
-                  <span
-                    class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                    :class="{
-                    'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800': req.status === 'pending',
-                    'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800': req.status === 'approved',
-                    'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800': req.status === 'rejected'
-                  }"
-                    x-text="getStatusLabel(req.status)"
-                  >
-                  </span>
-                </td>
-                <td class="py-3.5 px-4 text-right">
-                  <div
-                    class="flex items-center justify-end gap-1.5"
-                    x-show="req.status === 'pending'"
-                  >
-                    <button
-                      @click="approveRequest(req)"
-                      class="p-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-600 text-emerald-600 hover:text-white rounded-lg border border-emerald-200 dark:border-emerald-800 transition"
-                      title="Valider la demande"
-                    >
-                      <i data-lucide="check" class="w-4 h-4"></i>
-                    </button>
-                    <button
-                      @click="rejectRequest(req)"
-                      class="p-1.5 bg-red-50 dark:bg-red-950/60 hover:bg-red-600 text-red-600 hover:text-white rounded-lg border border-red-200 dark:border-red-800 transition"
-                      title="Refuser la demande"
-                    >
-                      <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                  </div>
-                  <span
-                    x-show="req.status !== 'pending'"
-                    class="text-slate-400 text-[11px] italic"
-                    >Traité</span
-                  >
-                </td>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead
+              class="bg-navy-900/80 border-b border-white/10 text-slate-400 uppercase font-semibold text-[10px] tracking-wider"
+            >
+              <tr>
+                <th class="py-3 px-4">Élève</th>
+                <th class="py-3 px-4">Filière & Promo</th>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-4">Certificat</th>
+                <th class="py-3 px-4">Statut</th>
+                <th class="py-3 px-4 text-right">Actions</th>
               </tr>
-            </template>
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <template x-for="req in registrationRequests" :key="req.id">
+                <tr class="hover:bg-navy-700/40 transition">
+                  <td class="py-3 px-4">
+                    <span
+                      class="font-medium text-slate-100 block"
+                      x-text="req.full_name"
+                    ></span>
+                    <span
+                      class="text-[10px] text-slate-400"
+                      x-text="req.email"
+                    ></span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class="text-slate-300" x-text="req.filiere"></span>
+                    <span
+                      class="text-[10px] text-slate-500 block"
+                      x-text="'Promo ' + req.promo"
+                    ></span>
+                  </td>
+                  <td
+                    class="py-3 px-4 text-slate-400"
+                    x-text="new Date(req.created_at).toLocaleDateString('fr-FR')"
+                  ></td>
+                  <td class="py-3 px-4">
+                    <button
+                      @click="previewProof(req)"
+                      class="inline-flex items-center gap-1 px-2 py-1 rounded bg-navy-700 hover:bg-navy-600 text-slate-200 border border-white/10 text-[11px] transition"
+                    >
+                      <i
+                        data-lucide="file-text"
+                        class="w-3 h-3 text-rose-accent"
+                      ></i>
+                      <span>Voir</span>
+                    </button>
+                  </td>
+                  <td class="py-3 px-4">
+                    <span
+                      class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                      :class="{
+                        'bg-amber-950/60 text-amber-400 border border-amber-800': req.status === 'pending',
+                        'bg-emerald-950/60 text-emerald-400 border border-emerald-800': req.status === 'approved',
+                        'bg-red-950/60 text-red-400 border border-red-800': req.status === 'rejected'
+                      }"
+                      x-text="getStatusLabel(req.status)"
+                    ></span>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <div
+                      class="flex items-center justify-end gap-1.5"
+                      x-show="req.status === 'pending'"
+                    >
+                      <button
+                        @click="approveRequest(req)"
+                        class="p-1.5 bg-emerald-950/60 hover:bg-emerald-700 text-emerald-400 hover:text-white rounded border border-emerald-800 transition"
+                        title="Valider"
+                      >
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                      </button>
+                      <button
+                        @click="rejectRequest(req)"
+                        class="p-1.5 bg-red-950/60 hover:bg-red-700 text-red-400 hover:text-white rounded border border-red-800 transition"
+                        title="Refuser"
+                      >
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </div>
+                    <span
+                      x-show="req.status !== 'pending'"
+                      class="text-slate-500 text-[10px] italic"
+                      >Traité</span
+                    >
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- MODAL AUTHENTIFICATION (LOGIN / REGISTER) -->
+    <!-- AUTH MODAL -->
     <div
       x-show="isAuthModalOpen"
       x-transition.opacity
-      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
       style="display: none"
     >
       <div
         @click.outside="isAuthModalOpen = false"
-        class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 text-slate-900 dark:text-slate-100"
+        class="bg-navy-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-white/10 flex flex-col gap-4 text-slate-100"
       >
         <div
-          class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800"
+          class="flex items-center justify-between pb-3 border-b border-white/10"
         >
-          <div
-            class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl"
-          >
+          <div class="flex items-center gap-1.5 bg-navy-900 p-1 rounded-lg">
             <button
               @click="authTab = 'login'"
-              :class="authTab === 'login' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'"
-              class="px-3 py-1 rounded-lg text-xs font-bold transition"
+              :class="authTab === 'login' ? 'bg-navy-700 text-white font-semibold' : 'text-slate-400'"
+              class="px-3 py-1 rounded text-xs transition"
             >
               Connexion
             </button>
             <button
               @click="authTab = 'register'"
-              :class="authTab === 'register' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'"
-              class="px-3 py-1 rounded-lg text-xs font-bold transition"
+              :class="authTab === 'register' ? 'bg-navy-700 text-white font-semibold' : 'text-slate-400'"
+              class="px-3 py-1 rounded text-xs transition"
             >
-              Demander un accès
+              Demande d'accès
             </button>
           </div>
           <button
             @click="isAuthModalOpen = false"
-            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            class="text-slate-400 hover:text-white"
           >
-            <i data-lucide="x" class="w-5 h-5"></i>
+            <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
 
-        <!-- ONGLET CONNEXION -->
+        <!-- Login Form -->
         <form
           x-show="authTab === 'login'"
           @submit.prevent="handleLogin()"
-          class="space-y-4 text-xs"
+          class="space-y-3.5 text-xs"
         >
           <div
             x-show="loginError"
-            class="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-medium"
+            class="p-2.5 rounded-lg bg-red-950/40 border border-red-800 text-red-300 text-xs"
             x-text="loginError"
           ></div>
 
           <div>
-            <label
-              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
-              >Adresse Email</label
-            >
+            <label class="block font-medium text-slate-300 mb-1">Email</label>
             <input
               type="email"
               x-model="loginEmail"
               required
               placeholder="nom@alumni.lymed.ma"
-              class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
             />
           </div>
           <div>
-            <label
-              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            <label class="block font-medium text-slate-300 mb-1"
               >Mot de passe</label
             >
             <input
@@ -757,59 +874,56 @@
               x-model="loginPassword"
               required
               placeholder="••••••••"
-              class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
             />
           </div>
 
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-sm flex items-center justify-center gap-2"
+            class="w-full py-2 bg-rose-accent hover:bg-white text-navy-950 font-bold rounded-lg transition disabled:opacity-50 mt-2"
           >
             <span x-show="!isLoading">Se connecter</span>
             <span x-show="isLoading">Connexion en cours...</span>
           </button>
         </form>
 
-        <!-- ONGLET DEMANDE D'ACCÈS -->
+        <!-- Access Request Form -->
         <form
           x-show="authTab === 'register'"
           @submit.prevent="submitRegistrationRequest($event)"
-          class="space-y-3.5 text-xs"
+          class="space-y-3 text-xs"
         >
           <template x-if="!registerSubmitted">
             <div class="space-y-3">
               <div>
-                <label
-                  class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                <label class="block font-medium text-slate-300 mb-1"
                   >Nom complet</label
                 >
                 <input
                   type="text"
                   x-model="regForm.name"
                   required
-                  placeholder="ex: Yassine Bennani"
-                  class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                  placeholder="ex: Omar Tazi"
+                  class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
                 />
               </div>
 
               <div>
-                <label
-                  class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                <label class="block font-medium text-slate-300 mb-1"
                   >Email</label
                 >
                 <input
                   type="email"
                   x-model="regForm.email"
                   required
-                  placeholder="yassine@exemple.com"
-                  class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                  placeholder="omar@exemple.com"
+                  class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
                 />
               </div>
 
               <div>
-                <label
-                  class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                <label class="block font-medium text-slate-300 mb-1"
                   >Mot de passe</label
                 >
                 <input
@@ -818,19 +932,18 @@
                   required
                   minlength="6"
                   placeholder="••••••••"
-                  class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                  class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
                 />
               </div>
 
               <div class="grid grid-cols-2 gap-2">
                 <div>
-                  <label
-                    class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  <label class="block font-medium text-slate-300 mb-1"
                     >Filière</label
                   >
                   <select
                     x-model="regForm.filiere"
-                    class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                    class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
                   >
                     <option>MPSI / MP</option>
                     <option>PCSI / PSI</option>
@@ -838,8 +951,7 @@
                   </select>
                 </div>
                 <div>
-                  <label
-                    class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                  <label class="block font-medium text-slate-300 mb-1"
                     >Promo</label
                   >
                   <input
@@ -847,67 +959,64 @@
                     x-model="regForm.promo"
                     required
                     placeholder="2026"
-                    class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                    class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
                   />
                 </div>
               </div>
 
               <div>
-                <label
-                  class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                  >Certificat / Justificatif Lymed (PDF ou Image)</label
+                <label class="block font-medium text-slate-300 mb-1"
+                  >Certificat de scolarité (PDF / Image)</label
                 >
                 <input
                   type="file"
                   required
                   accept=".pdf,image/*"
-                  class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+                  class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-navy-700 file:text-rose-accent hover:file:bg-navy-600 cursor-pointer"
                 />
               </div>
 
               <button
                 type="submit"
                 :disabled="isLoading"
-                class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-sm"
+                class="w-full py-2 bg-rose-accent hover:bg-white text-navy-950 font-bold rounded-lg transition disabled:opacity-50 mt-1"
               >
-                <span x-show="!isLoading">Envoyer ma demande</span>
+                <span x-show="!isLoading">Envoyer la demande</span>
                 <span x-show="isLoading">Envoi en cours...</span>
               </button>
             </div>
           </template>
 
-          <!-- Écran de confirmation après soumission -->
           <template x-if="registerSubmitted">
-            <div class="text-center py-6 space-y-3">
+            <div class="text-center py-5 space-y-2.5">
               <div
-                class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center mx-auto text-2xl font-bold"
+                class="w-10 h-10 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-400 flex items-center justify-center mx-auto"
               >
-                <i data-lucide="check-circle" class="w-6 h-6"></i>
+                <i data-lucide="check" class="w-5 h-5"></i>
               </div>
               <h4
-                class="font-bold text-slate-800 dark:text-slate-100 text-base"
+                class="font-bizantheum tracking-wider uppercase text-white text-base"
               >
-                Demande enregistrée !
+                Demande enregistrée
               </h4>
               <p
-                class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed"
+                class="text-xs text-slate-400 max-w-xs mx-auto leading-relaxed font-light"
               >
-                Ton justificatif est en attente de validation par un
-                administrateur. Dès son approbation, tu pourras te connecter
-                directement avec ton adresse email et ton mot de passe.
+                Ton justificatif sera validé sous peu par le bureau. Dès
+                validation, tu pourras te connecter directement.
               </p>
               <div class="flex items-center justify-center gap-2 pt-2">
                 <button
                   type="button"
                   @click="registerSubmitted = false; authTab = 'login'"
-                  class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-xs transition shadow-sm"
+                  class="px-3.5 py-1.5 bg-rose-accent text-navy-950 font-bold rounded-lg text-xs"
                 >
-                  Aller à la connexion
+                  Connexion
                 </button>
                 <button
                   type="button"
                   @click="isAuthModalOpen = false; registerSubmitted = false"
-                  class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                  class="px-3.5 py-1.5 bg-navy-700 text-slate-300 rounded-lg text-xs"
                 >
                   Fermer
                 </button>
@@ -918,36 +1027,39 @@
       </div>
     </div>
 
-    <!-- MODAL AJOUTER UNE RESSOURCE -->
+    <!-- UPLOAD RESOURCE MODAL -->
     <div
       x-show="isUploadModalOpen"
       x-transition.opacity
-      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+      class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
       style="display: none"
     >
       <div
         @click.outside="isUploadModalOpen = false"
-        class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 text-slate-900 dark:text-slate-100"
+        class="bg-navy-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-white/10 flex flex-col gap-4 text-slate-100"
       >
         <div
-          class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800"
+          class="flex items-center justify-between pb-3 border-b border-white/10"
         >
-          <h3 class="font-bold text-lg">Ajouter une ressource</h3>
+          <h3
+            class="font-bizantheum tracking-wider uppercase text-base text-white"
+          >
+            Ajouter une ressource
+          </h3>
           <button
             @click="isUploadModalOpen = false"
-            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            class="text-slate-400 hover:text-white"
           >
-            <i data-lucide="x" class="w-5 h-5"></i>
+            <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
 
         <form
           @submit.prevent="handleUploadResource($event)"
-          class="space-y-4 text-xs"
+          class="space-y-3.5 text-xs"
         >
           <div>
-            <label
-              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            <label class="block font-medium text-slate-300 mb-1"
               >Titre du document</label
             >
             <input
@@ -955,30 +1067,28 @@
               x-model="newResource.title"
               required
               placeholder="ex: Fiche Synthèse Dunford"
-              class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+              class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
             />
           </div>
           <div>
-            <label
-              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            <label class="block font-medium text-slate-300 mb-1"
               >Description (optionnelle)</label
             >
             <textarea
               x-model="newResource.description"
               rows="2"
-              placeholder="Détails, thèmes abordés..."
-              class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none resize-none"
+              placeholder="Détails, concours visés..."
+              class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent resize-none"
             ></textarea>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label
-                class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              <label class="block font-medium text-slate-300 mb-1"
                 >Matière</label
               >
               <select
                 x-model="newResource.matiere"
-                class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
               >
                 <option value="maths">Mathématiques</option>
                 <option value="physique">Physique & Chimie</option>
@@ -988,13 +1098,10 @@
               </select>
             </div>
             <div>
-              <label
-                class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                >Type</label
-              >
+              <label class="block font-medium text-slate-300 mb-1">Type</label>
               <select
                 x-model="newResource.type"
-                class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
               >
                 <option>Fiches</option>
                 <option>DS / Concours</option>
@@ -1004,43 +1111,41 @@
             </div>
           </div>
           <div>
-            <label
-              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
-              >Tags (séparés par des virgules)</label
+            <label class="block font-medium text-slate-300 mb-1"
+              >Tags (séparés par virgules)</label
             >
             <input
               type="text"
               x-model="newResource.tags"
-              placeholder="ex: Algèbre, Dunford, Concours 2026"
-              class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none"
+              placeholder="ex: Algèbre, Dunford, X-Mines"
+              class="w-full px-3 py-2 text-sm bg-navy-950/70 border border-white/15 rounded-lg text-white focus:outline-none focus:border-rose-accent"
             />
           </div>
           <div>
-            <label
-              class="block font-semibold text-slate-700 dark:text-slate-300 mb-1"
+            <label class="block font-medium text-slate-300 mb-1"
               >Fichier PDF</label
             >
             <input
               type="file"
               required
               accept=".pdf"
-              class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+              class="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-navy-700 file:text-rose-accent hover:file:bg-navy-600 cursor-pointer"
             />
           </div>
           <div
-            class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800"
+            class="flex items-center justify-end gap-2 pt-3 border-t border-white/10"
           >
             <button
               type="button"
               @click="isUploadModalOpen = false"
-              class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+              class="px-3.5 py-1.5 text-xs text-slate-400 hover:text-white rounded-lg transition"
             >
               Annuler
             </button>
             <button
               type="submit"
               :disabled="isLoading"
-              class="px-5 py-2 text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 rounded-xl shadow-sm transition"
+              class="px-4 py-1.5 text-xs font-bold bg-rose-accent hover:bg-white text-navy-950 rounded-lg transition disabled:opacity-50"
             >
               <span x-show="!isLoading">Publier</span>
               <span x-show="isLoading">Publication...</span>

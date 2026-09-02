@@ -1,9 +1,21 @@
 /* Configuration Tailwind Custom */
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
+@import url("https://googleapis.com");
 
-/* Styles spécifiques si besoin */
 [x-cloak] {
   display: none !important;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "bizantheum";
+  src: url("./fonts/bizantheum/Bizantheum.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }

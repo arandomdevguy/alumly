@@ -51,6 +51,7 @@ document.addEventListener("alpine:init", () => {
     selectedMatiere: "all",
     selectedType: "Tous",
     onlyStarred: false,
+    onlyMyPublications: false,
     sortBy: "stars",
     resources: [],
     registrationRequests: [],
@@ -73,6 +74,17 @@ document.addEventListener("alpine:init", () => {
         return;
       }
 
+      // Re-render des icônes SVG Lucide à chaque bascule de filtre
+      this.$watch("onlyMyPublications", () => {
+        this.$nextTick(() => lucide.createIcons());
+      });
+      this.$watch("onlyStarred", () => {
+        this.$nextTick(() => lucide.createIcons());
+      });
+      this.$watch("viewMode", () => {
+        this.$nextTick(() => lucide.createIcons());
+      });
+
       sbClient.auth.onAuthStateChange(async (event, session) => {
         if (session?.user) {
           await this.fetchUserProfile(session.user);
@@ -84,6 +96,32 @@ document.addEventListener("alpine:init", () => {
       });
 
       await this.loadResources();
+    },
+
+    goToDrive() {
+      this.currentView = "drive";
+      this.onlyMyPublications = false;
+      this.selectedMatiere = "all";
+      this.selectedType = "Tous";
+      this.selectedFiliere = "Tous";
+      this.onlyStarred = false;
+      this.searchQuery = "";
+      this.$nextTick(() => lucide.createIcons());
+    },
+
+    showMyResources() {
+      if (!this.currentUser) {
+        this.openAuthModal("login");
+        return;
+      }
+      this.currentView = "drive";
+      this.onlyMyPublications = true;
+      this.onlyStarred = false;
+      this.selectedMatiere = "all";
+      this.selectedType = "Tous";
+      this.selectedFiliere = "Tous";
+      this.searchQuery = "";
+      this.$nextTick(() => lucide.createIcons());
     },
 
     async fetchUserProfile(user) {
@@ -140,7 +178,7 @@ document.addEventListener("alpine:init", () => {
     async logout() {
       if (sbClient) await sbClient.auth.signOut();
       this.currentUser = null;
-      this.currentView = "drive";
+      this.goToDrive();
       this.userStarredIds.clear();
       this.$nextTick(() => lucide.createIcons());
     },
@@ -471,12 +509,17 @@ document.addEventListener("alpine:init", () => {
           item.filiere === "Tous";
         const matchStarred = !this.onlyStarred || item.isStarred;
 
+        const matchMyPubs =
+          !this.onlyMyPublications ||
+          (this.currentUser && item.author === this.currentUser.name);
+
         return (
           matchQuery &&
           matchMatiere &&
           matchType &&
           matchFiliere &&
-          matchStarred
+          matchStarred &&
+          matchMyPubs
         );
       });
 
